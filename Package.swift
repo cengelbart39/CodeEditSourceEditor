@@ -21,8 +21,8 @@ let package = Package(
         ),
         // tree-sitter languages
         .package(
-            url: "https://github.com/CodeEditApp/CodeEditLanguages.git",
-            exact: "0.1.17"
+            url: "https://github.com/cengelbart39/CodeEditLanguages.git",
+            branch: "feat/erb-ejs"
         ),
         // SwiftLint
         .package(

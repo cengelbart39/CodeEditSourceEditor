@@ -3,10 +3,10 @@
     {
       "identity" : "codeeditlanguages",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/CodeEditApp/CodeEditLanguages.git",
+      "location" : "https://github.com/cengelbart39/CodeEditLanguages.git",
       "state" : {
-        "revision" : "af29ab4a15474a0a38ef88ef65c20e58a0812e43",
-        "version" : "0.1.17"
+        "branch" : "feat/erb-ejs",
+        "revision" : "ed5f2f85a49d378053fb1d555c4f69e05c50d05c"
       }
     },
     {
@@ -59,8 +59,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ChimeHQ/SwiftTreeSitter",
       "state" : {
-        "revision" : "df25a52f72ebc5b50ae20d26d1363793408bb28b",
-        "version" : "0.7.1"
+        "revision" : "2599e95310b3159641469d8a21baf2d3d200e61f",
+        "version" : "0.8.0"
       }
     },
     {
