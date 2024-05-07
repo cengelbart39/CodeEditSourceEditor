@@ -112,10 +112,12 @@ final class TextViewControllerTests: XCTestCase {
 
     func test_editorInsets() throws {
         let scrollView = try XCTUnwrap(controller.view as? NSScrollView)
-        scrollView.frame = .init(x: .zero,
-                                 y: .zero,
-                                 width: 100,
-                                 height: 100)
+        scrollView.frame = .init(
+            x: .zero,
+            y: .zero,
+            width: 100,
+            height: 100
+        )
 
         func assertInsetsEqual(_ lhs: NSEdgeInsets, _ rhs: NSEdgeInsets) throws {
             XCTAssertEqual(lhs.top, rhs.top)
@@ -130,18 +132,21 @@ final class TextViewControllerTests: XCTestCase {
 
         // contentInsets: 0
         try assertInsetsEqual(scrollView.contentInsets, NSEdgeInsets(top: 0, left: 0, bottom: 0, right: 0))
+        XCTAssertEqual(controller.gutterView.frame.origin.y, 0)
 
         // contentInsets: 16
         controller.contentInsets = NSEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
         controller.reloadUI()
 
         try assertInsetsEqual(scrollView.contentInsets, NSEdgeInsets(top: 16, left: 16, bottom: 16, right: 16))
+        XCTAssertEqual(controller.gutterView.frame.origin.y, -16)
 
         // contentInsets: different
         controller.contentInsets = NSEdgeInsets(top: 32.5, left: 12.3, bottom: 20, right: 1)
         controller.reloadUI()
 
         try assertInsetsEqual(scrollView.contentInsets, NSEdgeInsets(top: 32.5, left: 12.3, bottom: 20, right: 1))
+        XCTAssertEqual(controller.gutterView.frame.origin.y, -32.5)
 
         // contentInsets: 16
         // editorOverscroll: 0.5
@@ -150,6 +155,7 @@ final class TextViewControllerTests: XCTestCase {
         controller.reloadUI()
 
         try assertInsetsEqual(scrollView.contentInsets, NSEdgeInsets(top: 16, left: 16, bottom: 16 + 50, right: 16))
+        XCTAssertEqual(controller.gutterView.frame.origin.y, -16)
     }
 
     func test_editorOverScroll_ZeroCondition() throws {
@@ -173,40 +179,41 @@ final class TextViewControllerTests: XCTestCase {
     }
 
     func test_indentBehavior() {
+        controller.highlighter = nil
+
         // Insert 1 space
         controller.indentOption = .spaces(count: 1)
-        controller.textView.replaceCharacters(in: NSRange(location: 0, length: controller.textView.textStorage.length), with: "")
+        controller.textView.replaceCharacters(in: NSRange(location: 0, length: controller.textView.length), with: "")
         controller.textView.selectionManager.setSelectedRange(NSRange(location: 0, length: 0))
         controller.textView.insertText("\t", replacementRange: .zero)
         XCTAssertEqual(controller.textView.string, " ")
 
         // Insert 2 spaces
         controller.indentOption = .spaces(count: 2)
-        controller.textView.textStorage.replaceCharacters(in: NSRange(location: 0, length: controller.textView.textStorage.length), with: "")
+        controller.textView.replaceCharacters(in: NSRange(location: 0, length: controller.textView.length), with: "")
         controller.textView.insertText("\t", replacementRange: .zero)
         XCTAssertEqual(controller.textView.string, "  ")
 
         // Insert 3 spaces
         controller.indentOption = .spaces(count: 3)
-        controller.textView.replaceCharacters(in: NSRange(location: 0, length: controller.textView.textStorage.length), with: "")
+        controller.textView.replaceCharacters(in: NSRange(location: 0, length: controller.textView.length), with: "")
         controller.textView.insertText("\t", replacementRange: .zero)
         XCTAssertEqual(controller.textView.string, "   ")
 
         // Insert 4 spaces
         controller.indentOption = .spaces(count: 4)
-        controller.textView.replaceCharacters(in: NSRange(location: 0, length: controller.textView.textStorage.length), with: "")
+        controller.textView.replaceCharacters(in: NSRange(location: 0, length: controller.textView.length), with: "")
         controller.textView.insertText("\t", replacementRange: .zero)
         XCTAssertEqual(controller.textView.string, "    ")
 
         // Insert tab
         controller.indentOption = .tab
-        controller.textView.replaceCharacters(in: NSRange(location: 0, length: controller.textView.textStorage.length), with: "")
+        controller.textView.replaceCharacters(in: NSRange(location: 0, length: controller.textView.length), with: "")
         controller.textView.insertText("\t", replacementRange: .zero)
         XCTAssertEqual(controller.textView.string, "\t")
 
         // Insert lots of spaces
         controller.indentOption = .spaces(count: 1000)
-        print(controller.textView.textStorage.length)
         controller.textView.replaceCharacters(in: NSRange(location: 0, length: controller.textView.textStorage.length), with: "")
         controller.textView.insertText("\t", replacementRange: .zero)
         XCTAssertEqual(controller.textView.string, String(repeating: " ", count: 1000))
@@ -236,8 +243,9 @@ final class TextViewControllerTests: XCTestCase {
     func test_bracketHighlights() {
         controller.scrollView.setFrameSize(NSSize(width: 500, height: 500))
         controller.viewDidLoad()
+        let _ = controller.textView.becomeFirstResponder()
         controller.bracketPairHighlight = nil
-        controller.textView.string = "{ Loren Ipsum {} }"
+        controller.setText("{ Lorem Ipsum {} }")
         controller.setCursorPositions([CursorPosition(line: 1, column: 2)]) // After first opening {
         XCTAssert(controller.highlightLayers.isEmpty, "Controller added highlight layer when setting is set to `nil`")
         controller.setCursorPositions([CursorPosition(line: 1, column: 3)])
@@ -273,7 +281,8 @@ final class TextViewControllerTests: XCTestCase {
     }
 
     func test_findClosingPair() {
-        controller.textView.string = "{ Loren Ipsum {} }"
+        let _ = controller.textView.becomeFirstResponder()
+        controller.textView.string = "{ Lorem Ipsum {} }"
         var idx: Int?
 
         // Test walking forwards
@@ -308,6 +317,7 @@ final class TextViewControllerTests: XCTestCase {
     // MARK: Set Text
 
     func test_setText() {
+        let _ = controller.textView.becomeFirstResponder()
         controller.textView.string = "Hello World"
         controller.textView.selectionManager.setSelectedRange(NSRange(location: 1, length: 2))
 
@@ -327,6 +337,7 @@ final class TextViewControllerTests: XCTestCase {
     // MARK: Cursor Positions
 
     func test_cursorPositionRangeInit() {
+        let _ = controller.textView.becomeFirstResponder()
         controller.setText("Hello World")
 
         // Test adding a position returns a valid one
@@ -367,6 +378,7 @@ final class TextViewControllerTests: XCTestCase {
     }
 
     func test_cursorPositionRowColInit() {
+        let _ = controller.textView.becomeFirstResponder()
         controller.setText("Hello World")
 
         // Test adding a position returns a valid one

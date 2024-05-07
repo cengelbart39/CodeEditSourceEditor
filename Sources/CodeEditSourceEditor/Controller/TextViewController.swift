@@ -16,7 +16,6 @@ import TextFormation
 ///
 /// A view controller class for managing a source editor. Uses ``CodeEditTextView/TextView`` for input and rendering,
 /// tree-sitter for syntax highlighting, and TextFormation for live editing completions.
-/// 
 public class TextViewController: NSViewController {
     // swiftlint:disable:next line_length
     public static let cursorPositionUpdatedNotification: Notification.Name = .init("TextViewController.cursorPositionNotification")
@@ -28,6 +27,8 @@ public class TextViewController: NSViewController {
     /// Internal reference to any injected layers in the text view.
     internal var highlightLayers: [CALayer] = []
     internal var systemAppearance: NSAppearance.Name?
+
+    package var isPostingCursorNotification: Bool = false
 
     /// The string contents.
     public var string: String {
@@ -57,6 +58,7 @@ public class TextViewController: NSViewController {
                 attributesFor(nil),
                 range: NSRange(location: 0, length: textView.textStorage.length)
             )
+            textView.selectionManager.selectedLineBackgroundColor = theme.selection
             highlighter?.invalidate()
         }
     }
@@ -149,7 +151,12 @@ public class TextViewController: NSViewController {
         }
     }
 
-    internal var highlighter: Highlighter?
+    var highlighter: Highlighter?
+
+    /// The tree sitter client managed by the source editor.
+    ///
+    /// This will be `nil` if another highlighter provider is passed to the source editor.
+    internal(set) public var treeSitterClient: TreeSitterClient?
 
     private var fontCharWidth: CGFloat { (" " as NSString).size(withAttributes: [.font: font]).width }
 
@@ -256,16 +263,40 @@ public class TextViewController: NSViewController {
         textView.isEditable = isEditable
         textView.isSelectable = isSelectable
 
+        styleScrollView()
+        styleTextView()
+        styleGutterView()
+
+        highlighter?.invalidate()
+    }
+
+    /// Style the text view.
+    package func styleTextView() {
         textView.selectionManager.selectionBackgroundColor = theme.selection
-        textView.selectionManager.selectedLineBackgroundColor = useThemeBackground
-        ? theme.lineHighlight
-        : systemAppearance == .darkAqua
-        ? NSColor.quaternaryLabelColor : NSColor.selectedTextBackgroundColor.withSystemEffect(.disabled)
+        textView.selectionManager.selectedLineBackgroundColor = getThemeBackground()
         textView.selectionManager.highlightSelectedLine = isEditable
         textView.selectionManager.insertionPointColor = theme.insertionPoint
         paragraphStyle = generateParagraphStyle()
         textView.typingAttributes = attributesFor(nil)
+    }
 
+    /// Finds the preferred use theme background.
+    /// - Returns: The background color to use.
+    private func getThemeBackground() -> NSColor {
+        if useThemeBackground {
+            return theme.lineHighlight
+        }
+
+        if systemAppearance == .darkAqua {
+            return NSColor.quaternaryLabelColor
+        }
+
+        return NSColor.selectedTextBackgroundColor.withSystemEffect(.disabled)
+    }
+
+    /// Style the gutter view.
+    package func styleGutterView() {
+        gutterView.frame.origin.y = -scrollView.contentInsets.top
         gutterView.selectedLineColor = useThemeBackground ? theme.lineHighlight : systemAppearance == .darkAqua
         ? NSColor.quaternaryLabelColor
         : NSColor.selectedTextBackgroundColor.withSystemEffect(.disabled)
@@ -276,17 +307,20 @@ public class TextViewController: NSViewController {
             gutterView.selectedLineTextColor = nil
             gutterView.selectedLineColor = .clear
         }
+    }
 
-        if let scrollView = view as? NSScrollView {
-            scrollView.drawsBackground = useThemeBackground
-            scrollView.backgroundColor = useThemeBackground ? theme.background : .clear
-            if let contentInsets = contentInsets {
-                scrollView.contentInsets = contentInsets
-            }
-            scrollView.contentInsets.bottom = (contentInsets?.bottom ?? 0) + bottomContentInsets
+    /// Style the scroll view.
+    package func styleScrollView() {
+        guard let scrollView = view as? NSScrollView else { return }
+        scrollView.drawsBackground = useThemeBackground
+        scrollView.backgroundColor = useThemeBackground ? theme.background : .clear
+        if let contentInsets {
+            scrollView.automaticallyAdjustsContentInsets = false
+            scrollView.contentInsets = contentInsets
+        } else {
+            scrollView.automaticallyAdjustsContentInsets = true
         }
-
-        highlighter?.invalidate()
+        scrollView.contentInsets.bottom = (contentInsets?.bottom ?? 0) + bottomContentInsets
     }
 
     deinit {

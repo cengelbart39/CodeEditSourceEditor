@@ -17,7 +17,7 @@ let package = Package(
         // A fast, efficient, text view for code.
         .package(
             url: "https://github.com/CodeEditApp/CodeEditTextView.git",
-            from: "0.7.0"
+            from: "0.7.3"
         ),
         // tree-sitter languages
         .package(
@@ -32,7 +32,7 @@ let package = Package(
         // Rules for indentation, pair completion, whitespace
         .package(
             url: "https://github.com/ChimeHQ/TextFormation",
-            from: "0.8.1"
+            from: "0.8.2"
         )
     ],
     targets: [

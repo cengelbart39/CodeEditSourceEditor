@@ -14,7 +14,6 @@ extension TextViewController {
         scrollView = NSScrollView()
         textView.postsFrameChangedNotifications = true
         textView.translatesAutoresizingMaskIntoConstraints = false
-        textView.selectionManager.insertionPointColor = theme.insertionPoint
 
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.contentView.postsFrameChangedNotifications = true
@@ -22,11 +21,6 @@ extension TextViewController {
         scrollView.hasHorizontalScroller = true
         scrollView.documentView = textView
         scrollView.contentView.postsBoundsChangedNotifications = true
-        scrollView.backgroundColor = useThemeBackground ? theme.background : .clear
-        if let contentInsets {
-            scrollView.automaticallyAdjustsContentInsets = false
-            scrollView.contentInsets = contentInsets
-        }
 
         gutterView = GutterView(
             font: font.rulerFont,
@@ -34,8 +28,6 @@ extension TextViewController {
             textView: textView,
             delegate: self
         )
-        gutterView.frame.origin.y = -scrollView.contentInsets.top
-        gutterView.backgroundColor = useThemeBackground ? theme.background : .textBackgroundColor
         gutterView.updateWidthIfNeeded()
         scrollView.addFloatingSubview(
             gutterView,
@@ -46,6 +38,10 @@ extension TextViewController {
         if let _undoManager {
             textView.setUndoManager(_undoManager)
         }
+
+        styleTextView()
+        styleScrollView()
+        styleGutterView()
         setUpHighlighter()
         setUpTextFormation()
 
@@ -113,5 +109,18 @@ extension TextViewController {
                 }
             }
             .store(in: &cancellables)
+
+        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            guard self.view.window?.firstResponder == self.textView else { return event }
+            let charactersIgnoringModifiers = event.charactersIgnoringModifiers
+            let commandKey = NSEvent.ModifierFlags.command.rawValue
+            let modifierFlags = event.modifierFlags.intersection(.deviceIndependentFlagsMask).rawValue
+            if modifierFlags == commandKey && event.charactersIgnoringModifiers == "/" {
+                self.commandSlashCalled()
+                return nil
+            } else {
+                return event
+            }
+        }
     }
 }
