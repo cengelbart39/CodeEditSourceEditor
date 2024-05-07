@@ -6,7 +6,7 @@
       "location" : "https://github.com/cengelbart39/CodeEditLanguages.git",
       "state" : {
         "branch" : "feat/erb-ejs",
-        "revision" : "8b0c5c0665f355cfac564b84f442fada6d2ca8ec"
+        "revision" : "35dcdbc293a6faf23d75ba53ba7c01215643bf91"
       }
     },
     {
@@ -59,8 +59,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ChimeHQ/SwiftTreeSitter.git",
       "state" : {
-        "revision" : "2599e95310b3159641469d8a21baf2d3d200e61f",
-        "version" : "0.8.0"
+        "revision" : "df25a52f72ebc5b50ae20d26d1363793408bb28b",
+        "version" : "0.7.1"
       }
     },
     {
