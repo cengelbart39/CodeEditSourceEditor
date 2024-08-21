@@ -37,6 +37,7 @@ extension TextViewController {
         // Filters
 
         setUpOpenPairFilters(pairs: BracketPairs.allValues)
+        setUpTagFilter()
         setUpNewlineTabFilters(indentOption: indentOption)
         setUpDeletePairFilters(pairs: BracketPairs.allValues)
         setUpDeleteWhitespaceFilter(indentOption: indentOption)
@@ -90,6 +91,16 @@ extension TextViewController {
         textFilters.append(filter)
     }
 
+    private func setUpTagFilter() {
+        guard let treeSitterClient, language.id.shouldProcessTags() else { return }
+        textFilters.append(TagFilter(
+            language: self.language,
+            indentOption: indentOption,
+            lineEnding: textView.layoutManager.detectedLineEnding,
+            treeSitterClient: treeSitterClient
+        ))
+    }
+
     /// Determines whether or not a text mutation should be applied.
     /// - Parameters:
     ///   - mutation: The text mutation.
@@ -111,10 +122,9 @@ extension TextViewController {
 
         for filter in textFilters {
             let action = filter.processMutation(mutation, in: textView, with: whitespaceProvider)
-
             switch action {
             case .none:
-                break
+                continue
             case .stop:
                 return true
             case .discard:
